@@ -10,7 +10,7 @@ export default function ChatScreen() {
 
   const chat = chatHistory.find((chat) => chat.id === id);
 
-  const handleSend = (message) => {
+  const handleSend = async (message: string) => {
     console.log('Sending: ', message);
   };
 

@@ -2,7 +2,7 @@ import { View, Text } from 'react-native';
 import ChatInput from '@/components/ChatInput';
 
 export default function HomeScreen() {
-  const handleSend = (message) => {
+  const handleSend = async (message: string) => {
     console.log('Sending: ', message);
   };
 
@@ -12,7 +12,7 @@ export default function HomeScreen() {
         <Text className='text-3xl  font-bold'>Home 123</Text>
       </View>
 
-      <ChatInput onSend={handleSend} isLoading={false} />
+      <ChatInput onSend={handleSend} />
     </View>
   );
 }
