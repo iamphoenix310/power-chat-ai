@@ -1,6 +1,7 @@
-import { View, Text } from 'react-native';
+import { View, Text, FlatList } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import ChatInput from '@/components/ChatInput';
+import MessageListItem from '@/components/MessageListItem';
 
 import chatHistory from '@assets/data/chatHistory.json';
 
@@ -23,9 +24,10 @@ export default function ChatScreen() {
 
   return (
     <View className='flex-1'>
-      <View className='flex-1'>
-        <Text>Messages</Text>
-      </View>
+      <FlatList
+        data={chat.messages}
+        renderItem={({ item }) => <MessageListItem messageItem={item} />}
+      />
 
       <ChatInput onSend={handleSend} isLoading={false} />
     </View>
