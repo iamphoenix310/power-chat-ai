@@ -1,9 +1,21 @@
 import { View, Text } from 'react-native';
 import ChatInput from '@/components/ChatInput';
+import { router } from 'expo-router';
+
+import { useChatStore } from '@/store/chatStore';
 
 export default function HomeScreen() {
+  const createNewChat = useChatStore((state) => state.createNewChat);
+  const addNewMessage = useChatStore((state) => state.addNewMessage);
+
   const handleSend = async (message: string) => {
-    console.log('Sending: ', message);
+    const newChatId = createNewChat(message.slice(0, 50));
+    addNewMessage(newChatId, {
+      id: Date.now().toString(),
+      role: 'user',
+      message,
+    });
+    router.push(`/chat/${newChatId}`);
   };
 
   return (
