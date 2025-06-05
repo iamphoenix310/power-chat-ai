@@ -2,6 +2,7 @@ import { View, Text, FlatList } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import ChatInput from '@/components/ChatInput';
 import MessageListItem from '@/components/MessageListItem';
+import { useRef, useEffect } from 'react';
 
 import chatHistory from '@assets/data/chatHistory.json';
 
@@ -10,11 +11,21 @@ import { useChatStore } from '@/store/chatStore';
 export default function ChatScreen() {
   const { id } = useLocalSearchParams();
 
+  const flatListRef = useRef<FlatList | null>(null);
+
   const chat = useChatStore((state) =>
     state.chatHistory.find((chat) => chat.id === id)
   );
 
   const addNewMessage = useChatStore((state) => state.addNewMessage);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      flatListRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+
+    return () => clearTimeout(timeout);
+  }, [chat?.messages]);
 
   const handleSend = async (message: string) => {
     if (!chat) return;
@@ -68,6 +79,7 @@ export default function ChatScreen() {
   return (
     <View className='flex-1'>
       <FlatList
+        ref={flatListRef}
         data={chat.messages}
         renderItem={({ item }) => <MessageListItem messageItem={item} />}
       />
