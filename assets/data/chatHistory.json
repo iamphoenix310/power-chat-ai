@@ -255,7 +255,7 @@
         "id": "10-1",
         "role": "assistant",
 
-        "message": "This is **bold** text. This is *italic* text. This is a [link](https://www.google.com). This is a code block: ```javascript\nconsole.log('Hello, world!');\n```"
+        "message": "This is **bold** text. This is *italic* text. This is a [link](https://www.google.com). This is a code block:\n\n```javascript\nconsole.log('Hello, world!');\n```"
       }
     ]
   }
