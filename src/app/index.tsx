@@ -16,6 +16,15 @@ export default function HomeScreen() {
       message,
     });
     router.push(`/chat/${newChatId}`);
+
+    try {
+      const response = await fetch('/api/chat');
+      const data = await response.json();
+
+      console.log(data);
+    } catch (error) {
+      console.error('Chat error:', error);
+    }
   };
 
   return (
