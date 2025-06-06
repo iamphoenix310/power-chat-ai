@@ -4,9 +4,8 @@ import ChatInput from '@/components/ChatInput';
 import MessageListItem from '@/components/MessageListItem';
 import { useRef, useEffect } from 'react';
 
-import chatHistory from '@assets/data/chatHistory.json';
-
 import { useChatStore } from '@/store/chatStore';
+import { getTextResponse, createAIImage } from '@/services/chatService';
 
 export default function ChatScreen() {
   const { id } = useLocalSearchParams();
@@ -15,6 +14,13 @@ export default function ChatScreen() {
 
   const chat = useChatStore((state) =>
     state.chatHistory.find((chat) => chat.id === id)
+  );
+
+  const setIsWaitingForResponse = useChatStore(
+    (state) => state.setIsWaitingForResponse
+  );
+  const isWaitingForResponse = useChatStore(
+    (state) => state.isWaitingForResponse
   );
 
   const addNewMessage = useChatStore((state) => state.addNewMessage);
@@ -27,9 +33,14 @@ export default function ChatScreen() {
     return () => clearTimeout(timeout);
   }, [chat?.messages]);
 
-  const handleSend = async (message: string, imageBase64: string | null) => {
+  const handleSend = async (
+    message: string,
+    imageBase64: string | null,
+    isImageGeneration: boolean
+  ) => {
     if (!chat) return;
 
+    setIsWaitingForResponse(true);
     addNewMessage(chat.id, {
       id: Date.now().toString(),
       role: 'user',
@@ -41,32 +52,26 @@ export default function ChatScreen() {
       chat.messages[chat.messages.length - 1]?.responseId;
 
     try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message,
-          previousResponseId,
-          imageBase64,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error);
+      let data;
+      if (isImageGeneration) {
+        data = await createAIImage(message);
+      } else {
+        data = await getTextResponse(message, imageBase64, previousResponseId);
       }
 
       const aiResponseMessage = {
         id: Date.now().toString(),
         message: data.responseMessage,
         responseId: data.responseId,
+        image: data.image,
         role: 'assistant' as const,
       };
 
       addNewMessage(chat.id, aiResponseMessage);
     } catch (error) {
       console.error('Chat error:', error);
+    } finally {
+      setIsWaitingForResponse(false);
     }
   };
 
@@ -84,9 +89,16 @@ export default function ChatScreen() {
         ref={flatListRef}
         data={chat.messages}
         renderItem={({ item }) => <MessageListItem messageItem={item} />}
+        ListFooterComponent={() =>
+          isWaitingForResponse && (
+            <Text className='text-gray-400 px-6 mb-4 animate-pulse'>
+              Waiting for response...
+            </Text>
+          )
+        }
       />
 
-      <ChatInput onSend={handleSend} isLoading={false} />
+      <ChatInput onSend={handleSend} />
     </View>
   );
 }

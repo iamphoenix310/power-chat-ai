@@ -1,7 +1,7 @@
 export interface Message {
   id: string;
   role: 'user' | 'assistant';
-  message: string;
+  message?: string;
   responseId?: string;
   image?: string;
 }

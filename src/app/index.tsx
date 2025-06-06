@@ -3,12 +3,22 @@ import ChatInput from '@/components/ChatInput';
 import { router } from 'expo-router';
 
 import { useChatStore } from '@/store/chatStore';
+import { createAIImage, getTextResponse } from '@/services/chatService';
 
 export default function HomeScreen() {
   const createNewChat = useChatStore((state) => state.createNewChat);
   const addNewMessage = useChatStore((state) => state.addNewMessage);
 
-  const handleSend = async (message: string, imageBase64: string | null) => {
+  const setIsWaitingForResponse = useChatStore(
+    (state) => state.setIsWaitingForResponse
+  );
+
+  const handleSend = async (
+    message: string,
+    imageBase64: string | null,
+    isImageGeneration: boolean
+  ) => {
+    setIsWaitingForResponse(true);
     const newChatId = createNewChat(message.slice(0, 50));
     addNewMessage(newChatId, {
       id: Date.now().toString(),
@@ -19,20 +29,18 @@ export default function HomeScreen() {
     router.push(`/chat/${newChatId}`);
 
     try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        body: JSON.stringify({ message, imageBase64 }),
-      });
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error);
+      let data;
+      if (isImageGeneration) {
+        data = await createAIImage(message);
+      } else {
+        data = await getTextResponse(message, imageBase64);
       }
 
       const aiResponseMessage = {
         id: Date.now().toString(),
         message: data.responseMessage,
         responseId: data.responseId,
+        image: data.image,
         role: 'assistant' as const,
       };
 
@@ -41,6 +49,8 @@ export default function HomeScreen() {
       console.log(data);
     } catch (error) {
       console.error('Chat error:', error);
+    } finally {
+      setIsWaitingForResponse(false);
     }
   };
 

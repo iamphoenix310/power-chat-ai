@@ -10,15 +10,24 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AntDesign, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
+import { useChatStore } from '@/store/chatStore';
 
 interface ChatInputProps {
-  onSend: (message: string, imageBase64: string | null) => Promise<void>;
-  isLoading?: boolean;
+  onSend: (
+    message: string,
+    imageBase64: string | null,
+    isImageGeneration: boolean
+  ) => Promise<void>;
 }
 
-export default function ChatInput({ onSend, isLoading }: ChatInputProps) {
+export default function ChatInput({ onSend }: ChatInputProps) {
   const insets = useSafeAreaInsets();
   const [message, setMessage] = useState('');
+  const [isImageGeneration, setIsImageGeneration] = useState(false);
+
+  const isWaitingForResponse = useChatStore(
+    (state) => state.isWaitingForResponse
+  );
 
   const [imageBase64, setImageBase64] = useState<string | null>(null);
 
@@ -27,7 +36,7 @@ export default function ChatInput({ onSend, isLoading }: ChatInputProps) {
     setImageBase64(null);
 
     try {
-      await onSend(message, imageBase64);
+      await onSend(message, imageBase64, isImageGeneration);
     } catch (error) {
       console.log(error);
     }
@@ -78,12 +87,19 @@ export default function ChatInput({ onSend, isLoading }: ChatInputProps) {
           className='pt-6 pb-2 px-4 text-white'
         />
 
-        <View className='flex-row justify-between items-center px-4'>
+        <View className='flex-row  items-center px-4 gap-2'>
           <MaterialCommunityIcons
             onPress={pickImage}
             name='plus'
             size={24}
             color='white'
+          />
+
+          <MaterialCommunityIcons
+            name='palette'
+            color={isImageGeneration ? 'royalblue' : 'gray'}
+            size={24}
+            onPress={() => setIsImageGeneration(!isImageGeneration)}
           />
 
           {!!message || imageBase64 ? (
@@ -92,11 +108,11 @@ export default function ChatInput({ onSend, isLoading }: ChatInputProps) {
               size={30}
               color='white'
               className='ml-auto'
-              disabled={isLoading}
+              disabled={isWaitingForResponse}
               onPress={handleSend}
             />
           ) : (
-            <View className='bg-white p-2 rounded-full flex-row gap-1'>
+            <View className='bg-white p-2 rounded-full flex-row gap-1 ml-auto'>
               <MaterialCommunityIcons
                 name='account-voice'
                 size={15}
