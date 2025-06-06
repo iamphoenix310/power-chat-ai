@@ -5,18 +5,23 @@ import {
   KeyboardAvoidingView,
   Platform,
   ImageBackground,
+  Alert,
+  Pressable,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AntDesign, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import { useChatStore } from '@/store/chatStore';
+import { useAudioRecorder, AudioModule, RecordingPresets } from 'expo-audio';
+import * as FileSystem from 'expo-file-system';
 
 interface ChatInputProps {
   onSend: (
     message: string,
     imageBase64: string | null,
-    isImageGeneration: boolean
+    isImageGeneration: boolean,
+    audioBase64: string | null
   ) => Promise<void>;
 }
 
@@ -25,18 +30,35 @@ export default function ChatInput({ onSend }: ChatInputProps) {
   const [message, setMessage] = useState('');
   const [isImageGeneration, setIsImageGeneration] = useState(false);
 
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordedAudioPath, setRecordedAudioPath] = useState<string | null>(
+    null
+  );
+  const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+
   const isWaitingForResponse = useChatStore(
     (state) => state.isWaitingForResponse
   );
 
   const [imageBase64, setImageBase64] = useState<string | null>(null);
 
+  const handleCovertAudio = async () => {
+    console.log('CHECK recordedAudioPath: ', recordedAudioPath);
+    if (!recordedAudioPath) return null;
+
+    return FileSystem.readAsStringAsync(recordedAudioPath, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+  };
+
   const handleSend = async () => {
     setMessage('');
     setImageBase64(null);
+    setRecordedAudioPath(null);
 
     try {
-      await onSend(message, imageBase64, isImageGeneration);
+      const audioBase64 = await handleCovertAudio();
+      await onSend(message, imageBase64, isImageGeneration, audioBase64);
     } catch (error) {
       console.log(error);
     }
@@ -51,6 +73,41 @@ export default function ChatInput({ onSend }: ChatInputProps) {
 
     if (!result.canceled && result.assets[0].base64) {
       setImageBase64(`data:image/jpeg;base64,${result.assets[0].base64}`);
+    }
+  };
+
+  // Recording logic
+
+  const startRecording = async () => {
+    try {
+      const { granted } = await AudioModule.requestRecordingPermissionsAsync();
+
+      if (!granted) {
+        Alert.alert(
+          'Permission not granted',
+          'Please grant permission to record audio'
+        );
+        return;
+      }
+
+      await audioRecorder.prepareToRecordAsync();
+      audioRecorder.record();
+      setIsRecording(true);
+    } catch (error) {
+      Alert.alert('Recording error', 'Please try again');
+    }
+  };
+
+  const stopRecording = async () => {
+    try {
+      await audioRecorder.stop();
+
+      if (audioRecorder.uri) {
+        setRecordedAudioPath(audioRecorder.uri);
+      }
+      setIsRecording(false);
+    } catch (error) {
+      Alert.alert('Error stopping the rocording');
     }
   };
 
@@ -102,7 +159,7 @@ export default function ChatInput({ onSend }: ChatInputProps) {
             onPress={() => setIsImageGeneration(!isImageGeneration)}
           />
 
-          {!!message || imageBase64 ? (
+          {!!message || imageBase64 || recordedAudioPath ? (
             <MaterialCommunityIcons
               name='arrow-up-circle'
               size={30}
@@ -112,14 +169,19 @@ export default function ChatInput({ onSend }: ChatInputProps) {
               onPress={handleSend}
             />
           ) : (
-            <View className='bg-white p-2 rounded-full flex-row gap-1 ml-auto'>
+            <Pressable
+              onPress={isRecording ? stopRecording : startRecording}
+              className='bg-white p-2 rounded-full flex-row gap-1 ml-auto'
+            >
               <MaterialCommunityIcons
                 name='account-voice'
                 size={15}
                 color='black'
               />
-              <Text className='text-black text-sm'>Voice</Text>
-            </View>
+              <Text className='text-black text-sm'>
+                {isRecording ? 'Recording...' : 'Voice'}
+              </Text>
+            </Pressable>
           )}
         </View>
       </View>

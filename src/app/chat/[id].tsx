@@ -5,7 +5,11 @@ import MessageListItem from '@/components/MessageListItem';
 import { useRef, useEffect } from 'react';
 
 import { useChatStore } from '@/store/chatStore';
-import { getTextResponse, createAIImage } from '@/services/chatService';
+import {
+  getTextResponse,
+  createAIImage,
+  getSpeechResponse,
+} from '@/services/chatService';
 
 export default function ChatScreen() {
   const { id } = useLocalSearchParams();
@@ -36,24 +40,36 @@ export default function ChatScreen() {
   const handleSend = async (
     message: string,
     imageBase64: string | null,
-    isImageGeneration: boolean
+    isImageGeneration: boolean,
+    audioBase64: string | null
   ) => {
     if (!chat) return;
 
     setIsWaitingForResponse(true);
-    addNewMessage(chat.id, {
-      id: Date.now().toString(),
-      role: 'user',
-      message,
-      ...(imageBase64 && { image: imageBase64 }),
-    });
+    if (!audioBase64) {
+      addNewMessage(chat.id, {
+        id: Date.now().toString(),
+        role: 'user',
+        message,
+        ...(imageBase64 && { image: imageBase64 }),
+      });
+    }
 
-    const previousResponseId =
-      chat.messages[chat.messages.length - 1]?.responseId;
+    const previousResponseId = chat.messages.findLast(
+      (message) => message.responseId
+    )?.responseId;
 
     try {
       let data;
-      if (isImageGeneration) {
+      if (audioBase64) {
+        data = await getSpeechResponse(audioBase64, previousResponseId);
+        const myMessage = {
+          id: Date.now().toString(),
+          role: 'user' as const,
+          message: data.transcribedMessage,
+        };
+        addNewMessage(chat.id, myMessage);
+      } else if (isImageGeneration) {
         data = await createAIImage(message);
       } else {
         data = await getTextResponse(message, imageBase64, previousResponseId);
