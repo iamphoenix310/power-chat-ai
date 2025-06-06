@@ -27,13 +27,14 @@ export default function ChatScreen() {
     return () => clearTimeout(timeout);
   }, [chat?.messages]);
 
-  const handleSend = async (message: string) => {
+  const handleSend = async (message: string, imageBase64: string | null) => {
     if (!chat) return;
 
     addNewMessage(chat.id, {
       id: Date.now().toString(),
       role: 'user',
       message,
+      ...(imageBase64 && { image: imageBase64 }),
     });
 
     const previousResponseId =
@@ -46,6 +47,7 @@ export default function ChatScreen() {
         body: JSON.stringify({
           message,
           previousResponseId,
+          imageBase64,
         }),
       });
 

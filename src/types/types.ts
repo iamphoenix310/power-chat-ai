@@ -3,6 +3,7 @@ export interface Message {
   role: 'user' | 'assistant';
   message: string;
   responseId?: string;
+  image?: string;
 }
 
 export interface Chat {
