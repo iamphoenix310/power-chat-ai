@@ -24,7 +24,7 @@ export default function HomeScreen() {
     audioBase64: string | null
   ) => {
     setIsWaitingForResponse(true);
-    const newChatId = createNewChat(message.slice(0, 50));
+    const newChatId = createNewChat(message.slice(0, 50) || 'New Chat');
     if (!audioBase64) {
       addNewMessage(newChatId, {
         id: Date.now().toString(),
