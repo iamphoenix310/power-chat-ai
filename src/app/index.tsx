@@ -7,7 +7,9 @@ import {
   createAIImage,
   getSpeechResponse,
   getTextResponse,
+  type ChatResponse,
 } from '@/services/chatService';
+import type { Message } from '@/types/types';
 
 export default function HomeScreen() {
   const createNewChat = useChatStore((state) => state.createNewChat);
@@ -36,7 +38,7 @@ export default function HomeScreen() {
     router.push(`/chat/${newChatId}`);
 
     try {
-      let data;
+      let data: ChatResponse | { image: string };
       if (audioBase64) {
         data = await getSpeechResponse(audioBase64);
         const myMessage = {
@@ -51,14 +53,16 @@ export default function HomeScreen() {
         data = await getTextResponse(message, imageBase64);
       }
 
-      const aiResponseMessage = {
+      const aiResponseMessage: Message = {
         id: Date.now().toString(),
-        message: data.responseMessage,
-        responseId: data.responseId,
-        image: data.image,
-        relatedQuestions: data.relatedQuestions,
-        role: 'assistant' as const,
-      };
+        role: 'assistant',
+        ...("responseMessage" in data && {
+          message: data.responseMessage,
+          responseId: data.responseId,
+          relatedQuestions: data.relatedQuestions,
+        }),
+        ...("image" in data && { image: data.image }),
+      } as Message;
 
       addNewMessage(newChatId, aiResponseMessage);
 
