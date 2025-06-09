@@ -30,23 +30,32 @@ export default function MessageListItem({
       {!!message && (
         <View
           className={`rounded-2xl p-4 py-1 ${
-            isUser && 'bg-[#262626] max-w-[70%]'
+            isUser ? 'bg-[#262626] max-w-[70%]' : 'bg-neutral-900 max-w-[85%]'
           }`}
         >
           <Markdown style={markdownStyles}>{message}</Markdown>
         </View>
       )}
+
       {!isUser && relatedQuestions?.length ? (
-        <View className='mt-2 w-full max-w-[80%] space-y-1'>
-          {relatedQuestions.map((q, idx) => (
-            <Pressable
-              key={idx}
-              onPress={() => onQuestionPress && onQuestionPress(q)}
-              className='bg-[#262626] rounded-lg p-2'
-            >
-              <Text className='text-gray-300 text-sm'>{q}</Text>
-            </Pressable>
-          ))}
+        <View className='mt-2 w-full max-w-[80%]'>
+          <Text className='text-gray-400 text-xs font-semibold mb-1'>
+            Related questions
+          </Text>
+          <View className='space-y-1'>
+            {relatedQuestions.map((q, idx) => {
+              const display = q.length > 80 ? `${q.slice(0, 77)}...` : q;
+              return (
+                <Pressable
+                  key={idx}
+                  onPress={() => onQuestionPress?.(q)}
+                  className='bg-[#262626] rounded-lg p-2'
+                >
+                  <Text className='text-gray-300 text-sm'>{display}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
         </View>
       ) : null}
     </View>

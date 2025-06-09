@@ -9,7 +9,9 @@ import {
   getTextResponse,
   createAIImage,
   getSpeechResponse,
+  type ChatResponse,
 } from '@/services/chatService';
+import type { Message } from '@/types/types';
 
 export default function ChatScreen() {
   const { id } = useLocalSearchParams();
@@ -50,42 +52,49 @@ export default function ChatScreen() {
     if (!chat) return;
 
     setIsWaitingForResponse(true);
-    if (!audioBase64) {
-      addNewMessage(chat.id, {
-        id: Date.now().toString(),
-        role: 'user',
-        message,
-        ...(imageBase64 && { image: imageBase64 }),
-      });
-    }
-
-    const previousResponseId = chat.messages.findLast(
-      (message) => message.responseId
-    )?.responseId;
 
     try {
-      let data;
+      let data: ChatResponse | { image: string };
+
       if (audioBase64) {
-        data = await getSpeechResponse(audioBase64, previousResponseId);
-        const myMessage = {
+        data = await getSpeechResponse(audioBase64, chat.messages.findLast((m) => m.responseId)?.responseId);
+        const myMessage: Message = {
           id: Date.now().toString(),
-          role: 'user' as const,
+          role: 'user',
           message: data.transcribedMessage,
         };
         addNewMessage(chat.id, myMessage);
       } else if (isImageGeneration) {
         data = await createAIImage(message);
+        const userMessage: Message = {
+          id: Date.now().toString(),
+          role: 'user',
+          message,
+          ...(imageBase64 ? { image: imageBase64 } : {}),
+        };
+        addNewMessage(chat.id, userMessage);
       } else {
+        // Normal text flow
+        const userMessage: Message = {
+          id: Date.now().toString(),
+          role: 'user',
+          message,
+          ...(imageBase64 ? { image: imageBase64 } : {}),
+        };
+        addNewMessage(chat.id, userMessage);
+
+        const previousResponseId = chat.messages.findLast((m) => m.responseId)?.responseId;
         data = await getTextResponse(message, imageBase64, previousResponseId);
       }
 
-      const aiResponseMessage = {
+      // Safely build assistant message
+      const aiResponseMessage: Message = {
         id: Date.now().toString(),
-        message: data.responseMessage,
-        responseId: data.responseId,
-        image: data.image,
-        relatedQuestions: data.relatedQuestions,
-        role: 'assistant' as const,
+        role: 'assistant',
+        message: 'responseMessage' in data ? data.responseMessage : '',
+        responseId: 'responseId' in data ? data.responseId : undefined,
+        relatedQuestions: 'relatedQuestions' in data ? data.relatedQuestions : undefined,
+        image: 'image' in data ? data.image : undefined,
       };
 
       addNewMessage(chat.id, aiResponseMessage);
