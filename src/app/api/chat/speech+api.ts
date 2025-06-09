@@ -24,17 +24,20 @@ export async function POST(request: Request) {
     let relatedQuestions: string[] | undefined = undefined;
     try {
       const questionsCompletion = await openai.chat.completions.create({
-        model: 'gpt-4.1',
-        messages: [
-          {
-            role: 'user',
-            content:
-              `Provide 3 advanced follow-up questions related to: ${transcription.text}. ` +
-              'Respond in JSON format as { "questions": ["q1","q2","q3"] }.',
-          },
-        ],
-        response_format: { type: 'json_object' },
-      });
+          model: 'gpt-4.1',
+          messages: [
+            {
+              role: 'user',
+              content:
+                `Based on the following input, generate 3 short and simple follow-up questions:\n\n` +
+                `"${transcription.text}"\n\n` +
+                `Each question should be clear, under 15 words, and focused.\n` +
+                `Respond only in JSON format as: { "questions": ["q1", "q2", "q3"] }`,
+            },
+          ],
+          response_format: { type: 'json_object' },
+        });
+
       const parsed = JSON.parse(
         questionsCompletion.choices[0].message.content || '{}'
       );

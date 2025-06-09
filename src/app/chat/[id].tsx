@@ -3,6 +3,8 @@ import { useLocalSearchParams } from 'expo-router';
 import ChatInput from '@/components/ChatInput';
 import MessageListItem from '@/components/MessageListItem';
 import { useRef, useEffect } from 'react';
+import { generateRelatedQuestions } from '@/lib/relatedQuestions';
+
 
 import { useChatStore } from '@/store/chatStore';
 import {
@@ -88,14 +90,31 @@ export default function ChatScreen() {
       }
 
       // Safely build assistant message
-      const aiResponseMessage: Message = {
-        id: Date.now().toString(),
-        role: 'assistant',
-        message: 'responseMessage' in data ? data.responseMessage : '',
-        responseId: 'responseId' in data ? data.responseId : undefined,
-        relatedQuestions: 'relatedQuestions' in data ? data.relatedQuestions : undefined,
-        image: 'image' in data ? data.image : undefined,
-      };
+     const aiResponseMessage: Message = {
+      id: Date.now().toString(),
+      role: 'assistant',
+      message: 'responseMessage' in data ? data.responseMessage : '',
+      responseId: 'responseId' in data ? data.responseId : undefined,
+      image: 'image' in data ? data.image : undefined,
+    };
+
+    // 👉 Generate related questions using model
+      try {
+      const questionsResult = await generateRelatedQuestions(
+        [
+          { role: 'user', content: message },
+          { role: 'assistant', content: aiResponseMessage.message || '' }
+        ],
+        'openai:gpt-4o'
+      );
+
+      if ('data' in questionsResult && questionsResult.data.length) {
+        aiResponseMessage.relatedQuestions = questionsResult.data;
+      }
+    } catch (err) {
+      console.warn('❌ Related questions generation failed:', err);
+    }
+
 
       addNewMessage(chat.id, aiResponseMessage);
     } catch (error) {

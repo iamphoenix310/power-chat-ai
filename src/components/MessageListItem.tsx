@@ -38,26 +38,28 @@ export default function MessageListItem({
       )}
 
       {!isUser && relatedQuestions?.length ? (
-        <View className='mt-2 w-full max-w-[80%]'>
-          <Text className='text-gray-400 text-xs font-semibold mb-1'>
-            Related questions
-          </Text>
-          <View className='space-y-1'>
-            {relatedQuestions.map((q, idx) => {
-              const display = q.length > 80 ? `${q.slice(0, 77)}...` : q;
-              return (
-                <Pressable
-                  key={idx}
-                  onPress={() => onQuestionPress?.(q)}
-                  className='bg-[#262626] rounded-lg p-2'
-                >
-                  <Text className='text-gray-300 text-sm'>{display}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
+      <View className="mt-3 w-full max-w-[90%]">
+        <Text className="text-sm text-gray-400 font-semibold mb-2">💡 Related questions</Text>
+        <View className="flex flex-col gap-2">
+          {relatedQuestions.map((q, idx) => {
+            const display = q.length > 90 ? `${q.slice(0, 87)}...` : q;
+            return (
+              <Pressable
+                key={idx}
+                onPress={() => onQuestionPress?.(q)}
+                className="bg-[#1f1f1f] border border-neutral-700 rounded-xl p-3 shadow-sm"
+                android_ripple={{ color: '#333' }}
+              >
+                <Text className="text-gray-100 text-[15px] leading-snug">
+                  {display}
+                </Text>
+              </Pressable>
+            );
+          })}
         </View>
-      ) : null}
+      </View>
+    ) : null}
+
     </View>
   );
 }
