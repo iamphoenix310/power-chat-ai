@@ -1,4 +1,12 @@
-export async function createAIImage(prompt: string) {
+export interface ChatResponse {
+  responseMessage: string;
+  responseId: string;
+  image?: string;
+  transcribedMessage?: string;
+  relatedQuestions?: string[];
+}
+
+export async function createAIImage(prompt: string): Promise<{ image: string }> {
   const res = await fetch('/api/chat/createImage', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -14,7 +22,7 @@ export const getTextResponse = async (
   message: string,
   imageBase64: string | null,
   previousResponseId?: string
-) => {
+): Promise<ChatResponse> => {
   const res = await fetch('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -23,13 +31,13 @@ export const getTextResponse = async (
 
   const data = await res.json();
   if (!res.ok) throw new Error(data.error);
-  return data;
+  return data as ChatResponse;
 };
 
 export const getSpeechResponse = async (
   audioBase64: string,
   previousResponseId?: string
-) => {
+): Promise<ChatResponse> => {
   const res = await fetch('/api/chat/speech', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -38,5 +46,5 @@ export const getSpeechResponse = async (
 
   const data = await res.json();
   if (!res.ok) throw new Error(data.error);
-  return data;
+  return data as ChatResponse;
 };

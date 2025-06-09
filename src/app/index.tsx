@@ -56,6 +56,7 @@ export default function HomeScreen() {
         message: data.responseMessage,
         responseId: data.responseId,
         image: data.image,
+        relatedQuestions: data.relatedQuestions,
         role: 'assistant' as const,
       };
 

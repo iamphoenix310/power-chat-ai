@@ -29,6 +29,10 @@ export default function ChatScreen() {
 
   const addNewMessage = useChatStore((state) => state.addNewMessage);
 
+  const handleQuestionPress = async (question: string) => {
+    await handleSend(question, null, false, null);
+  };
+
   useEffect(() => {
     const timeout = setTimeout(() => {
       flatListRef.current?.scrollToEnd({ animated: true });
@@ -80,6 +84,7 @@ export default function ChatScreen() {
         message: data.responseMessage,
         responseId: data.responseId,
         image: data.image,
+        relatedQuestions: data.relatedQuestions,
         role: 'assistant' as const,
       };
 
@@ -104,7 +109,12 @@ export default function ChatScreen() {
       <FlatList
         ref={flatListRef}
         data={chat.messages}
-        renderItem={({ item }) => <MessageListItem messageItem={item} />}
+        renderItem={({ item }) => (
+          <MessageListItem
+            messageItem={item}
+            onQuestionPress={handleQuestionPress}
+          />
+        )}
         ListFooterComponent={() =>
           isWaitingForResponse && (
             <Text className='text-gray-400 px-6 mb-4 animate-pulse'>
