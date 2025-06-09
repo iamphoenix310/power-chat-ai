@@ -30,12 +30,13 @@ export default function MessageListItem({
       {!!message && (
         <View
           className={`rounded-2xl p-4 py-1 ${
-            isUser && 'bg-[#262626] max-w-[70%]'
+            isUser ? 'bg-[#262626] max-w-[70%]' : 'bg-neutral-900 max-w-[85%]'
           }`}
         >
           <Markdown style={markdownStyles}>{message}</Markdown>
         </View>
       )}
+
       {!isUser && relatedQuestions?.length ? (
         <View className='mt-2 w-full max-w-[80%]'>
           <Text className='text-gray-400 text-xs font-semibold mb-1'>
