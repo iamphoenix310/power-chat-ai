@@ -4,6 +4,7 @@ export interface Message {
   message?: string;
   responseId?: string;
   image?: string;
+  relatedQuestions?: string[];
 }
 
 export interface Chat {
